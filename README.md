@@ -18,8 +18,8 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 | Item          | Value                                              |
 |---------------|----------------------------------------------------|
 | WAN           | `ether1` -> modem at `192.168.100.1` (DHCP client) |
-| LAN           | `ether2-5` in `bridge-lan`, `192.168.88.0/24`      |
-| Router (LAN)  | `192.168.88.1`, DHCP pool `.100-.199`              |
+| LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.88.0/24` |
+| Router (LAN)  | `192.168.88.1`, DHCP from the factory defconf      |
 | Admin access  | WinBox/SSH from LAN only                           |
 
 The router sits behind a modem, so this is double NAT. The modem UI stays
@@ -59,7 +59,7 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
 ├── .gitignore
 ├── LICENSE
 └── config/
-    ├── 00-base.rsc        # bridge, interface lists, IPs, DHCP, DNS
+    ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS
     ├── 10-firewall.rsc    # address lists, filter, NAT
     └── 20-hardening.rsc   # disable unused services
 ```
@@ -71,7 +71,8 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
 2. Upload `.rsc` files (WinBox Files, `scp`, or SFTP).
 3. Enter **Safe Mode** (`Ctrl+X` in terminal) so a lockout auto-reverts.
 4. Import in order: `00-base.rsc`, `10-firewall.rsc`, `20-hardening.rsc`
-   (`/import file-name=10-firewall.rsc`). Check port names in `00-base.rsc` first.
+   (`/import file-name=10-firewall.rsc`). Start from the factory default config (`defconf`); the firewall script
+   removes the default rules and replaces them.
 5. Verify LAN access to the router, then leave Safe Mode to commit.
 
 Verify with:

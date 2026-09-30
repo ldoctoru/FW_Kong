@@ -9,6 +9,10 @@ add list=bogons address=224.0.0.0/4
 add list=bogons address=240.0.0.0/4
 # NOTE: 192.168.100.0/24 (modem) is private but is our upstream; not listed.
 
+# Replace the factory rules with ours (safe to re-run: our rules carry no "defconf").
+/ip firewall filter remove [find comment~"defconf"]
+/ip firewall nat remove [find comment~"defconf"]
+
 /ip firewall filter
 # ---- INPUT (to the router) ----
 add chain=input action=accept connection-state=established,related,untracked comment="in: est/rel"

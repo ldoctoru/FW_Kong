@@ -1,32 +1,21 @@
-# 00-base.rsc  -  flat LAN, single WAN (RouterOS v7)
-# Assumptions (edit to match): WAN = ether1 (to modem 192.168.100.1),
-# LAN = ether2-ether5 in bridge "bridge-lan", LAN = 192.168.88.0/24.
-# LAN must NOT overlap the modem subnet 192.168.100.0/24.
+# 00-base.rsc  -  adopt the factory "defconf" layout (RouterOS v7)
+# Verified against the device's default config:
+#   WAN  = ether1 (outside the bridge)
+#   LAN  = bridge "bridge": ether2-8 + sfp-sfpplus1
+#   LAN  = 192.168.88.1/24, defconf DHCP server + WAN DHCP client
+# Upstream modem: 192.168.100.1 (WAN gets 192.168.100.x by DHCP).
+# The LAN must NOT overlap 192.168.100.0/24.
+#
+# Nothing to create here; only guard that the lists exist, then set DNS.
 
-:global wanIf "ether1"
+:if ([:len [/interface list find name=WAN]] = 0) do={ /interface list add name=WAN }
+:if ([:len [/interface list find name=LAN]] = 0) do={ /interface list add name=LAN }
+:if ([:len [/interface list member find list=WAN interface=ether1]] = 0) do={ /interface list member add list=WAN interface=ether1 }
+:if ([:len [/interface list member find list=LAN interface=bridge]] = 0) do={ /interface list member add list=LAN interface=bridge }
 
-/interface bridge add name=bridge-lan comment="LAN"
-/interface bridge port
-add bridge=bridge-lan interface=ether2
-add bridge=bridge-lan interface=ether3
-add bridge=bridge-lan interface=ether4
-add bridge=bridge-lan interface=ether5
-
-/interface list add name=WAN
-/interface list add name=LAN
-/interface list member add list=WAN interface=ether1
-/interface list member add list=LAN interface=bridge-lan
-
-/ip address add address=192.168.88.1/24 interface=bridge-lan comment="LAN gateway"
-
-# WAN gets its address from the modem (192.168.100.0/24, gw 192.168.100.1).
-# Static alternative:
+# Static WAN alternative (replace the DHCP client):
+#   /ip dhcp-client remove [find interface=ether1]
 #   /ip address add address=192.168.100.2/24 interface=ether1
 #   /ip route add gateway=192.168.100.1
-/ip dhcp-client add interface=ether1 use-peer-dns=no add-default-route=yes comment="WAN"
-
-/ip pool add name=lan-pool ranges=192.168.88.100-192.168.88.199
-/ip dhcp-server add name=lan-dhcp interface=bridge-lan address-pool=lan-pool lease-time=1d
-/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
 
 /ip dns set allow-remote-requests=yes servers=1.1.1.1,9.9.9.9
