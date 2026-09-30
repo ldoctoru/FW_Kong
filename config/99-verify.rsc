@@ -31,7 +31,7 @@
 :if ([:len [/ip firewall filter find comment="fwd: drop all else"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd: drop all else") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd: drop all else" . "  ->  " . "expected exactly 1") }
 
 :put "=== firewall filter: duplicates and leftovers ==="
-:global filterTotal [:len [/ip firewall filter find]]
+:global filterTotal [:len [/ip firewall filter find dynamic=no]]
 :if ($filterTotal = 15) do={ :set vok ($vok + 1); :put ("OK    " . "filter has exactly 15 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter has exactly 15 rules (no duplicates or extras)" . "  ->  " . ("found " . $filterTotal . " rules")) }
 :if ([:len [/ip firewall filter find comment~"defconf"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "no factory defconf filter rules left") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "no factory defconf filter rules left" . "  ->  " . "run 10-firewall.rsc") }
 
@@ -41,8 +41,8 @@
 :global firstFw
 :global inCount 0
 :global fwCount 0
-:foreach rid in=[/ip firewall filter find chain=input] do={ :set lastIn $rid; :set inCount ($inCount + 1) }
-:foreach rid in=[/ip firewall filter find chain=forward] do={
+:foreach rid in=[/ip firewall filter find chain=input dynamic=no] do={ :set lastIn $rid; :set inCount ($inCount + 1) }
+:foreach rid in=[/ip firewall filter find chain=forward dynamic=no] do={
   :if ($fwCount = 0) do={ :set firstFw $rid }
   :set lastFw $rid
   :set fwCount ($fwCount + 1)
