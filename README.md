@@ -66,8 +66,8 @@ Change the IPs and ports at the top of each section for your network.
 ## Watching for login attempts and brute force
 
 ```
-/log print where buffer=auth-log                    # all logins
-/log print where buffer=auth-log and message~"failure"   # failed logins only
+/log print where buffer=authlog                    # all logins
+/log print where buffer=authlog and message~"failure"   # failed logins only
 /ip firewall address-list print where list=wan-mgmt-attempts   # internet hosts probing management ports
 ```
 

@@ -64,8 +64,8 @@
 :if ($ps5Bad = 0) do={ :set vok ($vok + 1); :put ("OK    " . "ps5 forwards -> 192.168.100.148") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "ps5 forwards -> 192.168.100.148" . "  ->  " . ($ps5Bad . " rule(s) point elsewhere")) }
 
 :put "=== logging ==="
-:if ([:len [/system logging action find name=auth-log]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "log action auth-log exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "log action auth-log exists" . "  ->  " . "run logging.rsc") }
-:if ([:len [/system logging find action=auth-log]] = 2) do={ :set vok ($vok + 1); :put ("OK    " . "2 log rules use auth-log") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "2 log rules use auth-log" . "  ->  " . "run logging.rsc") }
+:if ([:len [/system logging action find name=authlog]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "log action authlog exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "log action authlog exists" . "  ->  " . "run logging.rsc") }
+:if ([:len [/system logging find action=authlog]] = 2) do={ :set vok ($vok + 1); :put ("OK    " . "2 log rules use authlog") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "2 log rules use authlog" . "  ->  " . "run logging.rsc") }
 
 :put "==============================="
 :put ("passed: " . $vok . "   failed: " . $vfail)
