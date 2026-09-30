@@ -18,3 +18,7 @@
 /ip dns set servers=192.168.100.150 allow-remote-requests=no
 /ip dhcp-client set [find interface=ether1] use-peer-dns=no
 /ip dhcp-server network set [find address=192.168.100.0/24] dns-server=192.168.100.150
+
+# MikroTik Cloud DDNS (dynamic WAN IP -> <serial>.sn.mynetname.net) + cloud time update.
+# Show the name with:  /ip cloud print
+/ip cloud set ddns-enabled=yes update-time=yes
