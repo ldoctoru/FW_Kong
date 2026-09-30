@@ -6,8 +6,8 @@ set ftp disabled=yes
 set www disabled=yes
 set api disabled=yes
 set api-ssl disabled=yes
-set ssh address=192.168.88.0/24
-set winbox address=192.168.88.0/24
+set ssh address=192.168.100.0/24
+set winbox address=192.168.100.0/24
 
 /ip neighbor discovery-settings set discover-interface-list=LAN
 /tool mac-server set allowed-interface-list=LAN

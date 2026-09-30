@@ -17,15 +17,14 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 
 | Item          | Value                                              |
 |---------------|----------------------------------------------------|
-| WAN           | `ether1` -> modem at `192.168.100.1` (DHCP client) |
-| LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.88.0/24` |
-| Router (LAN)  | `192.168.88.1`, DHCP from the factory defconf      |
+| WAN           | `ether1`, dynamic IP from ISP (DHCP client)        |
+| LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.100.0/24` |
+| Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
 | Admin access  | WinBox/SSH from LAN only                           |
 
-The router sits behind a modem, so this is double NAT. The modem UI stays
-reachable at `192.168.100.1` from the LAN via masquerade. If the modem
-supports bridge/IP-passthrough mode, use it and remove double NAT.
-LAN must not overlap `192.168.100.0/24`.
+Port forwards (emby/jellyfin, qBittorrent, PS5, WhatsApp, WireGuard) match on
+the `WAN` interface list, so a changing WAN IP does not matter. See
+`config/30-portforward.rsc`; fill in the target hosts before importing.
 
 ## Rule policy (order matters)
 
@@ -45,7 +44,8 @@ LAN must not overlap `192.168.100.0/24`.
 6. LAN → WAN accept
 7. drop everything else
 
-**NAT**: `masquerade` on `WAN`; explicit `dst-nat` only for published services.
+**NAT**: `masquerade` on `WAN`; hairpin masquerade for LAN; explicit `dst-nat`
+only for published services (`30-portforward.rsc`).
 
 Extras worth enabling: bogon/`address-list` blocks on WAN, SSH brute-force
 stage lists, disabling unused services (`/ip service`, MAC-server, neighbor
@@ -61,7 +61,8 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
 └── config/
     ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS
     ├── 10-firewall.rsc    # address lists, filter, NAT
-    └── 20-hardening.rsc   # disable unused services
+    ├── 20-hardening.rsc   # disable unused services
+    └── 30-portforward.rsc # dstnat + hairpin (fill in target IPs)
 ```
 
 ## Usage
@@ -70,7 +71,7 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
    `/export hide-sensitive file=pre-fw`.
 2. Upload `.rsc` files (WinBox Files, `scp`, or SFTP).
 3. Enter **Safe Mode** (`Ctrl+X` in terminal) so a lockout auto-reverts.
-4. Import in order: `00-base.rsc`, `10-firewall.rsc`, `20-hardening.rsc`
+4. Import in order: `00-base.rsc`, `10-firewall.rsc`, `20-hardening.rsc`, `30-portforward.rsc`
    (`/import file-name=10-firewall.rsc`). Start from the factory default config (`defconf`); the firewall script
    removes the default rules and replaces them.
 5. Verify LAN access to the router, then leave Safe Mode to commit.
