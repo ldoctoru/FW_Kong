@@ -9,7 +9,7 @@ remove [find comment="HAIRPIN NAT"]
 remove [find where chain=dstnat and comment~"^(emby/jellyfin|qbit|PS5|wg)$"]
 
 # Hairpin: LAN clients reaching a forward via the public IP
-add chain=srcnat action=masquerade src-address=192.168.100.0/24 dst-address=192.168.100.0/24 out-interface-list=LAN comment="HAIRPIN NAT" place-before=0
+add chain=srcnat action=masquerade src-address=192.168.100.0/24 dst-address=192.168.100.0/24 out-interface-list=LAN comment="HAIRPIN NAT"
 
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=tcp dst-port=8096-8097 to-addresses=$nasHost comment="emby/jellyfin"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=tcp dst-port=58946     to-addresses=$nasHost comment="qbit"
