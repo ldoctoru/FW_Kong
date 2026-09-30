@@ -13,6 +13,7 @@ add chain=srcnat action=masquerade src-address=192.168.100.0/24 dst-address=192.
 
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=tcp dst-port=8096-8097 to-addresses=192.168.100.200 comment="emby/jellyfin"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=tcp dst-port=58946     to-addresses=192.168.100.200 comment="qbit"
+add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=58946     to-addresses=192.168.100.200 comment="qbit udp"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=8572      to-addresses=192.168.100.148 comment="PS5"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=9302      to-addresses=192.168.100.148 comment="PS5"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=9295-9308 to-addresses=192.168.100.148 comment="PS5"
@@ -22,3 +23,4 @@ add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=987 
 # = any address of this router, so it follows the dynamic WAN IP). PS5 needs none.
 add chain=dstnat action=dst-nat in-interface-list=LAN dst-address-type=local protocol=tcp dst-port=8096-8097 to-addresses=192.168.100.200 comment="LAN emby/jellyfin"
 add chain=dstnat action=dst-nat in-interface-list=LAN dst-address-type=local protocol=tcp dst-port=58946     to-addresses=192.168.100.200 comment="LAN qbit"
+add chain=dstnat action=dst-nat in-interface-list=LAN dst-address-type=local protocol=udp dst-port=58946     to-addresses=192.168.100.200 comment="LAN qbit udp"

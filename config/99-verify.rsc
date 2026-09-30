@@ -61,13 +61,15 @@
 :if ([:len [/ip firewall nat find comment="qbit"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "qbit forward once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "qbit forward once" . "  ->  " . "check /ip firewall nat") }
 :if ([:len [/ip firewall nat find comment="LAN emby/jellyfin"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "LAN hairpin emby/jellyfin once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "LAN hairpin emby/jellyfin once" . "  ->  " . "check /ip firewall nat") }
 :if ([:len [/ip firewall nat find comment="LAN qbit"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "LAN hairpin qbit once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "LAN hairpin qbit once" . "  ->  " . "check /ip firewall nat") }
+:if ([:len [/ip firewall nat find comment="qbit udp"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "qbit udp forward once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "qbit udp forward once" . "  ->  " . "check /ip firewall nat") }
+:if ([:len [/ip firewall nat find comment="LAN qbit udp"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "LAN hairpin qbit udp once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "LAN hairpin qbit udp once" . "  ->  " . "check /ip firewall nat") }
 :if ([:len [/ip firewall nat find comment="PS5"]] = 4) do={ :set vok ($vok + 1); :put ("OK    " . "PS5 forwards = 4 rules") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "PS5 forwards = 4 rules" . "  ->  " . "check /ip firewall nat") }
 :if ([:len [/ip firewall nat find comment~"defconf"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "no factory defconf NAT rules left") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "no factory defconf NAT rules left" . "  ->  " . "run 10-firewall.rsc") }
 :if ([:len [/ip firewall nat find comment="wg"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "old wg forward removed") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "old wg forward removed" . "  ->  " . "run 30-portforward.rsc") }
 :global natTotal [:len [/ip firewall nat find]]
-:if ($natTotal = 10) do={ :set vok ($vok + 1); :put ("OK    " . "NAT has exactly 10 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "NAT has exactly 10 rules (no duplicates or extras)" . "  ->  " . ("found " . $natTotal . " rules")) }
+:if ($natTotal = 12) do={ :set vok ($vok + 1); :put ("OK    " . "NAT has exactly 12 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "NAT has exactly 12 rules (no duplicates or extras)" . "  ->  " . ("found " . $natTotal . " rules")) }
 :global dstTotal [:len [/ip firewall nat find chain=dstnat]]
-:if ($dstTotal = 8) do={ :set vok ($vok + 1); :put ("OK    " . "exactly 8 port-forward (dstnat) rules") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "exactly 8 port-forward (dstnat) rules" . "  ->  " . ("found " . $dstTotal)) }
+:if ($dstTotal = 10) do={ :set vok ($vok + 1); :put ("OK    " . "exactly 10 port-forward (dstnat) rules") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "exactly 10 port-forward (dstnat) rules" . "  ->  " . ("found " . $dstTotal)) }
 :global nasBad 0
 :foreach rid in=[/ip firewall nat find comment="emby/jellyfin"] do={
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
@@ -76,6 +78,12 @@
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
 }
 :foreach rid in=[/ip firewall nat find comment="LAN qbit"] do={
+  :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
+}
+:foreach rid in=[/ip firewall nat find comment="qbit udp"] do={
+  :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
+}
+:foreach rid in=[/ip firewall nat find comment="LAN qbit udp"] do={
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
 }
 :foreach rid in=[/ip firewall nat find comment="qbit"] do={
