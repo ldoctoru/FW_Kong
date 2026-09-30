@@ -10,18 +10,19 @@
 :if ([:len [/interface list member find where list=WAN and interface=ether1]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "WAN list has ether1 once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "WAN list has ether1 once" . "  ->  " . "see /ip firewall") }
 :if ([:len [/interface list member find where list=LAN and interface=bridge]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "LAN list has bridge once") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "LAN list has bridge once" . "  ->  " . "see /ip firewall") }
 
-:put "=== filter (9 rules) ==="
+:put "=== filter (10 rules) ==="
 :if ([:len [/ip firewall filter find comment="fw: in est/rel"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in est/rel") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in est/rel" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: in drop invalid"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in drop invalid") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in drop invalid" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: in icmp"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in icmp") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in icmp" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: in LAN"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in LAN") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in LAN" . "  ->  " . "expected exactly 1") }
+:if ([:len [/ip firewall filter find comment="fw: in WAN mgmt attempts"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in WAN mgmt attempts") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in WAN mgmt attempts" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: in drop all else"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: in drop all else") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: in drop all else" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: fwd fasttrack"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd fasttrack") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd fasttrack" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: fwd est/rel"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd est/rel") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd est/rel" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: fwd drop invalid"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd drop invalid") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd drop invalid" . "  ->  " . "expected exactly 1") }
 :if ([:len [/ip firewall filter find comment="fw: fwd drop WAN not dstnat"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd drop WAN not dstnat") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd drop WAN not dstnat" . "  ->  " . "expected exactly 1") }
 :global filterTotal [:len [/ip firewall filter find dynamic=no]]
-:if ($filterTotal = 9) do={ :set vok ($vok + 1); :put ("OK    " . "filter has exactly 9 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter has exactly 9 rules (no duplicates or extras)" . "  ->  " . ("found " . $filterTotal)) }
+:if ($filterTotal = 10) do={ :set vok ($vok + 1); :put ("OK    " . "filter has exactly 10 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter has exactly 10 rules (no duplicates or extras)" . "  ->  " . ("found " . $filterTotal)) }
 :global lastIn
 :global firstFw
 :global inCount 0
@@ -61,6 +62,10 @@
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.148") do={ :set ps5Bad ($ps5Bad + 1) }
 }
 :if ($ps5Bad = 0) do={ :set vok ($vok + 1); :put ("OK    " . "ps5 forwards -> 192.168.100.148") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "ps5 forwards -> 192.168.100.148" . "  ->  " . ($ps5Bad . " rule(s) point elsewhere")) }
+
+:put "=== logging ==="
+:if ([:len [/system logging action find name=auth-log]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "log action auth-log exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "log action auth-log exists" . "  ->  " . "run logging.rsc") }
+:if ([:len [/system logging find action=auth-log]] = 2) do={ :set vok ($vok + 1); :put ("OK    " . "2 log rules use auth-log") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "2 log rules use auth-log" . "  ->  " . "run logging.rsc") }
 
 :put "==============================="
 :put ("passed: " . $vok . "   failed: " . $vfail)

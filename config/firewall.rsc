@@ -18,13 +18,15 @@
 /ip firewall nat remove [find dynamic=no]
 /ip firewall address-list remove [find list=bogons]
 
-# --- filter: 9 rules ---
+# --- filter: 10 rules ---
 /ip firewall filter
 # traffic TO the router
 add chain=input action=accept connection-state=established,related,untracked comment="fw: in est/rel"
 add chain=input action=drop connection-state=invalid comment="fw: in drop invalid"
 add chain=input action=accept protocol=icmp comment="fw: in icmp"
 add chain=input action=accept in-interface-list=LAN comment="fw: in LAN"
+# record (no log spam) who probes management ports from the internet; see: /ip firewall address-list print where list=wan-mgmt-attempts
+add chain=input action=add-src-to-address-list address-list=wan-mgmt-attempts address-list-timeout=1d in-interface-list=WAN protocol=tcp dst-port=21,22,23,80,443,8291,8728,8729 connection-state=new comment="fw: in WAN mgmt attempts"
 add chain=input action=drop comment="fw: in drop all else"
 # traffic THROUGH the router (LAN -> WAN is allowed by default)
 add chain=forward action=fasttrack-connection connection-state=established,related comment="fw: fwd fasttrack"
