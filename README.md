@@ -1,112 +1,68 @@
-# FW_Kong – MikroTik Homelab Firewall
+# FW_Kong - simple MikroTik homelab firewall
 
-RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and kept in Git as reviewable `.rsc` scripts.
+One small RouterOS v7 script: a default-deny firewall for a flat home network.
+The earlier, larger version (DNS, hardening, DDNS, verify) is kept in [`archive/`](archive/).
 
-> **Status:** baseline. Adjust interface names and the LAN subnet in
-> `config/00-base.rsc` before importing. Always test with Safe Mode.
+## Network assumed
 
-## Goals
+| Item   | Value                                                        |
+|--------|--------------------------------------------------------------|
+| WAN    | `ether1`, dynamic IP from the ISP                            |
+| LAN    | `bridge` (`ether2-8`, `sfp-sfpplus1`), `192.168.100.0/24`    |
+| Router | `192.168.100.1`                                              |
 
-- **Default deny** on `input` and `forward`; explicit allows only.
-- **Small and simple**: one WAN, one flat LAN; easy to extend to VLANs later.
-- **Fast path first**: FastTrack for established/related, then drops.
-- **Reproducible**: whole config lives in Git; no click-ops drift.
-- **No secrets in the repo** (see `.gitignore`).
+## Files
 
-## Network model (flat, no VLANs)
+| File                  | What it does                                              |
+|-----------------------|-----------------------------------------------------------|
+| `config/firewall.rsc` | The whole firewall: 9 filter rules, 12 NAT rules          |
+| `config/verify.rsc`   | Read-only check that the router matches `firewall.rsc`    |
+| `archive/`            | Previous config and README (not used, kept for reference) |
 
-| Item          | Value                                              |
-|---------------|----------------------------------------------------|
-| WAN           | `ether1`, dynamic IP from ISP (DHCP client)        |
-| LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.100.0/24` |
-| Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
-| DNS           | Technitium at `192.168.100.150` (via DHCP + router) |
-| DDNS          | MikroTik Cloud (`/ip cloud print` for the name)    |
-| Admin access  | WinBox/SSH from LAN only                           |
+## The rules
 
-Port forwards (emby/jellyfin, qBittorrent, PS5) match on
-the `WAN` interface list, so a changing WAN IP does not matter. See
-`config/30-portforward.rsc`: media/qBittorrent -> `192.168.100.200`,
-PS5 -> `192.168.100.148`.
+**Filter (9 rules, all commented `fw: ...`)**
 
-## Rule policy (order matters)
+| Chain   | Rule                                                              |
+|---------|-------------------------------------------------------------------|
+| input   | accept established / related / untracked                         |
+| input   | drop invalid                                                      |
+| input   | accept ICMP (ping)                                                |
+| input   | accept everything from the LAN                                    |
+| input   | drop everything else (silent, no logging)                        |
+| forward | FastTrack established / related                                   |
+| forward | accept established / related / untracked                         |
+| forward | drop invalid                                                      |
+| forward | drop new connections from the WAN that are not port forwards     |
 
-**input chain (traffic to the router)**
-1. accept established, related, untracked
-2. drop invalid
-3. accept ICMP (rate limited)
-4. accept everything from `LAN` (WinBox/SSH further limited by `/ip service`)
-5. drop everything else (log WAN drops with a rate limit)
+LAN to internet is allowed by default (no final forward drop needed).
 
-**forward chain (traffic through the router)**
-1. FastTrack established/related
-2. accept established, related, untracked
-3. drop invalid
-4. drop new WAN→LAN not DSTNATed
-5. bogon source check
-6. LAN → WAN accept
-7. drop everything else
+**NAT (12 rules)**
+- masquerade out of the WAN, plus a hairpin masquerade for LAN to LAN
+- port forwards from the WAN list (works with a dynamic IP): emby/jellyfin tcp 8096-8097 and qBittorrent tcp+udp 58946 to `192.168.100.200`; PS5 udp 8572, 9302, 9295-9308, 987 to `192.168.100.148`
+- the same emby and qBittorrent forwards for LAN clients using the public / DDNS name
 
-**NAT**: `masquerade` on `WAN`; hairpin masquerade plus LAN-side dst-nat for emby/qbit (`dst-address-type=local`, so LAN clients can use the public/DDNS name); explicit `dst-nat`
-only for published services (`30-portforward.rsc`).
+## Install
 
-Extras worth enabling: bogon/`address-list` blocks on WAN, SSH brute-force
-stage lists, disabling unused services (`/ip service`, MAC-server, neighbor
-discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
+1. Back up: `/system backup save name=pre-fw` and `/export hide-sensitive file=pre-fw`.
+2. Put `firewall.rsc` on the router (Winbox **Files**, or `/tool fetch`).
+3. Enter **Safe Mode** (`Ctrl+X`) from a LAN port.
+4. `/import file-name=firewall.rsc verbose=yes`
+5. `/import file-name=verify.rsc`, expect `RESULT: ALL OK`.
+6. Leave Safe Mode with `Ctrl+X` to keep the changes.
 
-## Repository layout
+`firewall.rsc` deletes all existing filter and NAT rules first (start from scratch).
+Change the IPs and ports at the top of each section for your network.
 
-```
-.
-├── README.md
-├── .gitignore
-├── LICENSE
-└── config/
-    ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS (Technitium)
-    ├── 10-firewall.rsc    # address lists, filter, NAT
-    ├── 20-hardening.rsc   # disable unused services
-    ├── 30-portforward.rsc # dstnat + hairpin
-    └── 99-verify.rsc      # read-only health/duplicate check
-```
+## RouterOS notes (learned the hard way)
 
-## Usage
+- `/import` runs each top-level line as its own statement: no `:local` variables, no helper functions. Use `:global`.
+- Do not put `$` inside quoted regexes.
+- `hw-offload` is not accepted on the FastTrack rule on this version.
 
-1. Back up first: `/system backup save name=pre-fw` and
-   `/export hide-sensitive file=pre-fw`.
-2. Upload `.rsc` files (WinBox Files, `scp`, or SFTP).
-3. Enter **Safe Mode** (`Ctrl+X` in terminal) so a lockout auto-reverts.
-4. Import in order: `00-base.rsc`, `10-firewall.rsc`, `20-hardening.rsc`, `30-portforward.rsc`
-   (`/import file-name=10-firewall.rsc`). Start from the factory default config (`defconf`); the firewall script
-   removes the default rules and replaces them.
-5. Verify LAN access to the router, then leave Safe Mode to commit.
+## Secrets
 
-Verify (read-only, prints OK/FAIL and finds duplicates):
-
-```
-/import file-name=99-verify.rsc
-```
-
-Or check by hand:
-
-```
-/ip firewall filter print stats
-/ip firewall connection print count-only
-/log print where topics~"firewall"
-```
-
-## Secrets policy
-
-- Export with `/export hide-sensitive` only.
-- Never commit `.backup` files, WireGuard/VPN keys, PSKs, certificates or
-  `.env` files — they are ignored by `.gitignore`. Rotate anything that leaks.
-
-## Maintenance
-
-- Change via PR; describe intent and rollback.
-- Re-export sanitized config after any live change to detect drift:
-  `/export hide-sensitive file=live` then `diff` against `config/`.
-- Keep RouterOS on the stable channel and review release notes for firewall
-  behaviour changes.
+Never commit `.backup` files or raw exports. Export with `/export hide-sensitive`. See `.gitignore`.
 
 ## License
 
