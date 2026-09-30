@@ -22,11 +22,10 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 | Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
 | Admin access  | WinBox/SSH from LAN only                           |
 
-Port forwards (emby/jellyfin, qBittorrent, PS5, WireGuard) match on
+Port forwards (emby/jellyfin, qBittorrent, PS5) match on
 the `WAN` interface list, so a changing WAN IP does not matter. See
 `config/30-portforward.rsc`: media/qBittorrent -> `192.168.100.200`,
-PS5 -> `192.168.100.148`. WireGuard (udp 13231) terminates on the router itself,
-so it is an `input` accept rule, not a dst-nat.
+PS5 -> `192.168.100.148`.
 
 ## Rule policy (order matters)
 

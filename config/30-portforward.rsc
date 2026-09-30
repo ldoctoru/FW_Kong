@@ -17,5 +17,3 @@ add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=8572
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=9302      to-addresses=$ps5Host comment="PS5"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=9295-9308 to-addresses=$ps5Host comment="PS5"
 add chain=dstnat action=dst-nat in-interface-list=WAN protocol=udp dst-port=987       to-addresses=$ps5Host comment="PS5"
-# WireGuard: the live "wg" rule has no To Addresses, i.e. WG terminates on the
-# router itself. That needs an INPUT accept (10-firewall.rsc), not a dst-nat.
