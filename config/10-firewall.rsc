@@ -1,6 +1,7 @@
 # 10-firewall.rsc  -  default-deny, stateful (RouterOS v7)
 # Requires interface lists WAN / LAN from 00-base.rsc.
 
+/ip firewall address-list remove [find list=bogons]
 /ip firewall address-list
 add list=bogons address=0.0.0.0/8
 add list=bogons address=127.0.0.0/8
@@ -14,7 +15,6 @@ add list=bogons address=240.0.0.0/4
 # Also clear our own rules so re-running never duplicates them.
 /ip firewall filter remove [find comment~"^(in|fwd): "]
 /ip firewall nat remove [find comment~"^NAT: "]
-/ip firewall address-list remove [find list=bogons]
 
 /ip firewall filter
 # ---- INPUT (to the router) ----
