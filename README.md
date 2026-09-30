@@ -21,6 +21,7 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 | LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.100.0/24` |
 | Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
 | DNS           | Technitium at `192.168.100.150` (via DHCP + router) |
+| DDNS          | MikroTik Cloud (`/ip cloud print` for the name)    |
 | Admin access  | WinBox/SSH from LAN only                           |
 
 Port forwards (emby/jellyfin, qBittorrent, PS5) match on
