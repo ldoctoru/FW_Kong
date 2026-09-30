@@ -15,5 +15,4 @@ set winbox address=192.168.100.0/24
 /ip upnp set enabled=no
 /ip proxy set enabled=no
 /ip socks set enabled=no
-/ip cloud set ddns-enabled=no update-time=no
 /ip ssh set strong-crypto=yes
