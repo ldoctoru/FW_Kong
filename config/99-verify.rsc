@@ -36,13 +36,21 @@ $chk ok=($filterTotal = 15) name="filter has exactly 15 rules (no duplicates or 
 $chk ok=([:len [/ip firewall filter find comment~"defconf"]] = 0) name="no factory defconf filter rules left" info="run 10-firewall.rsc"
 
 :put "=== firewall filter: chain order ==="
-:local inIds [/ip firewall filter find where chain=input]
-:local fwIds [/ip firewall filter find where chain=forward]
-:local lastIn [:pick $inIds ([:len $inIds] - 1)]
-:local lastFw [:pick $fwIds ([:len $fwIds] - 1)]
-$chk ok=([/ip firewall filter get $lastIn action] = "drop") name="input chain ends with drop" info="last input rule is not a drop"
-$chk ok=([/ip firewall filter get $lastFw action] = "drop") name="forward chain ends with drop" info="last forward rule is not a drop"
-$chk ok=([/ip firewall filter get [:pick $fwIds 0] action] = "fasttrack-connection") name="forward chain starts with fasttrack" info="first forward rule is not fasttrack"
+:local lastIn ""
+:local lastFw ""
+:local firstFw ""
+:foreach rid in=[/ip firewall filter find chain=input] do={ :set lastIn $rid }
+:foreach rid in=[/ip firewall filter find chain=forward] do={
+  :if ($firstFw = "") do={ :set firstFw $rid }
+  :set lastFw $rid
+}
+:if ($lastIn = "" or $lastFw = "") do={
+  $chk ok=false name="input/forward chains have rules" info="chain empty"
+} else={
+  $chk ok=([/ip firewall filter get $lastIn action] = "drop") name="input chain ends with drop" info="last input rule is not a drop"
+  $chk ok=([/ip firewall filter get $lastFw action] = "drop") name="forward chain ends with drop" info="last forward rule is not a drop"
+  $chk ok=([/ip firewall filter get $firstFw action] = "fasttrack-connection") name="forward chain starts with fasttrack" info="first forward rule is not fasttrack"
+}
 
 :put "=== NAT ==="
 $chk ok=([:len [/ip firewall nat find where comment="NAT: LAN -> WAN"]] = 1) name="WAN masquerade exactly once" info="check /ip firewall nat"
