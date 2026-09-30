@@ -15,8 +15,6 @@
 # DNS: Technitium server at 192.168.100.150 (web UI http://192.168.100.150:5380).
 # Clients get it straight from DHCP; the router itself also resolves through it.
 # If Technitium is down, LAN name resolution stops - keep it on a stable host.
-:local dnsHost "192.168.100.150"
-
-/ip dns set servers=$dnsHost allow-remote-requests=no
+/ip dns set servers=192.168.100.150 allow-remote-requests=no
 /ip dhcp-client set [find interface=ether1] use-peer-dns=no
-/ip dhcp-server network set [find address=192.168.100.0/24] dns-server=$dnsHost
+/ip dhcp-server network set [find address=192.168.100.0/24] dns-server=192.168.100.150
