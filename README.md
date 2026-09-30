@@ -15,13 +15,14 @@ The earlier, larger version (DNS, hardening, DDNS, verify) is kept in [`archive/
 
 | File                  | What it does                                              |
 |-----------------------|-----------------------------------------------------------|
-| `config/firewall.rsc` | The whole firewall: 9 filter rules, 12 NAT rules          |
+| `config/firewall.rsc` | The whole firewall: 10 filter rules, 12 NAT rules         |
+| `config/logging.rsc`  | Separate log buffer for logins and failed logins          |
 | `config/verify.rsc`   | Read-only check that the router matches `firewall.rsc`    |
 | `archive/`            | Previous config and README (not used, kept for reference) |
 
 ## The rules
 
-**Filter (9 rules, all commented `fw: ...`)**
+**Filter (10 rules, all commented `fw: ...`)**
 
 | Chain   | Rule                                                              |
 |---------|-------------------------------------------------------------------|
@@ -29,6 +30,7 @@ The earlier, larger version (DNS, hardening, DDNS, verify) is kept in [`archive/
 | input   | drop invalid                                                      |
 | input   | accept ICMP (ping)                                                |
 | input   | accept everything from the LAN                                    |
+| input   | record internet hosts probing SSH/WinBox/web/telnet/FTP/API in the `wan-mgmt-attempts` list (kept 1 day) |
 | input   | drop everything else (silent, no logging)                        |
 | forward | FastTrack established / related                                   |
 | forward | accept established / related / untracked                         |
@@ -48,8 +50,9 @@ LAN to internet is allowed by default (no final forward drop needed).
 2. Put `firewall.rsc` on the router (Winbox **Files**, or `/tool fetch`).
 3. Enter **Safe Mode** (`Ctrl+X`) from a LAN port.
 4. `/import file-name=firewall.rsc verbose=yes`
-5. `/import file-name=verify.rsc`, expect `RESULT: ALL OK`.
-6. Leave Safe Mode with `Ctrl+X` to keep the changes.
+5. `/import file-name=logging.rsc`
+6. `/import file-name=verify.rsc`, expect `RESULT: ALL OK`.
+7. Leave Safe Mode with `Ctrl+X` to keep the changes.
 
 `firewall.rsc` deletes all existing filter and NAT rules first (start from scratch).
 Change the IPs and ports at the top of each section for your network.
@@ -59,6 +62,17 @@ Change the IPs and ports at the top of each section for your network.
 - `/import` runs each top-level line as its own statement: no `:local` variables, no helper functions. Use `:global`.
 - Do not put `$` inside quoted regexes.
 - `hw-offload` is not accepted on the FastTrack rule on this version.
+
+## Watching for login attempts and brute force
+
+```
+/log print where buffer=auth-log                    # all logins
+/log print where buffer=auth-log and message~"failure"   # failed logins only
+/ip firewall address-list print where list=wan-mgmt-attempts   # internet hosts probing management ports
+```
+
+The internet cannot log in to the router (the input chain drops it); the list shows who tried.
+A failed login from a LAN address means a device or person inside the network.
 
 ## Secrets
 
