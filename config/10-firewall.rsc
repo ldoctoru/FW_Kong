@@ -37,4 +37,4 @@ add chain=forward action=accept in-interface-list=LAN out-interface-list=WAN com
 add chain=forward action=drop   comment="fwd: drop all else"
 
 /ip firewall nat
-add chain=srcnat action=masquerade out-interface-list=WAN comment="NAT: LAN -> WAN "
+add chain=srcnat action=masquerade out-interface-list=WAN comment="NAT: LAN -> WAN"
