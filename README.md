@@ -20,6 +20,7 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 | WAN           | `ether1`, dynamic IP from ISP (DHCP client)        |
 | LAN           | `bridge`: `ether2-8`, `sfp-sfpplus1`, `192.168.100.0/24` |
 | Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
+| DNS           | Technitium at `192.168.100.150` (via DHCP + router) |
 | Admin access  | WinBox/SSH from LAN only                           |
 
 Port forwards (emby/jellyfin, qBittorrent, PS5) match on
@@ -60,7 +61,7 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
 ├── .gitignore
 ├── LICENSE
 └── config/
-    ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS
+    ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS (Technitium)
     ├── 10-firewall.rsc    # address lists, filter, NAT
     ├── 20-hardening.rsc   # disable unused services
     └── 30-portforward.rsc # dstnat + hairpin
