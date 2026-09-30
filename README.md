@@ -47,7 +47,7 @@ PS5 -> `192.168.100.148`.
 6. LAN → WAN accept
 7. drop everything else
 
-**NAT**: `masquerade` on `WAN`; hairpin masquerade for LAN; explicit `dst-nat`
+**NAT**: `masquerade` on `WAN`; hairpin masquerade plus LAN-side dst-nat for emby/qbit (`dst-address-type=local`, so LAN clients can use the public/DDNS name); explicit `dst-nat`
 only for published services (`30-portforward.rsc`).
 
 Extras worth enabling: bogon/`address-list` blocks on WAN, SSH brute-force
