@@ -22,7 +22,7 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 | Router (LAN)  | `192.168.100.1`, DHCP from the existing server    |
 | Admin access  | WinBox/SSH from LAN only                           |
 
-Port forwards (emby/jellyfin, qBittorrent, PS5, WhatsApp, WireGuard) match on
+Port forwards (emby/jellyfin, qBittorrent, PS5, WireGuard) match on
 the `WAN` interface list, so a changing WAN IP does not matter. See
 `config/30-portforward.rsc`; fill in the target hosts before importing.
 
