@@ -1,7 +1,8 @@
 # 99-verify.rsc  -  READ-ONLY health check for the FW_Kong config (RouterOS v7)
 # Changes nothing. Run after importing 00..30:
 #   /import file-name=99-verify.rsc
-# Prints OK / FAIL per check (plain inline checks, no helper function),
+# Prints OK / FAIL per check. Uses :global (not :local) on purpose: /import runs
+# each top-level line as its own statement, so :local variables do not persist.
 # catches duplicate rules by count, and ends with a summary.
 
 :global vfail 0
@@ -30,16 +31,16 @@
 :if ([:len [/ip firewall filter find comment="fwd: drop all else"]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "filter: fwd: drop all else") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter: fwd: drop all else" . "  ->  " . "expected exactly 1") }
 
 :put "=== firewall filter: duplicates and leftovers ==="
-:local filterTotal [:len [/ip firewall filter find]]
+:global filterTotal [:len [/ip firewall filter find]]
 :if ($filterTotal = 15) do={ :set vok ($vok + 1); :put ("OK    " . "filter has exactly 15 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "filter has exactly 15 rules (no duplicates or extras)" . "  ->  " . ("found " . $filterTotal . " rules")) }
 :if ([:len [/ip firewall filter find comment~"defconf"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "no factory defconf filter rules left") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "no factory defconf filter rules left" . "  ->  " . "run 10-firewall.rsc") }
 
 :put "=== firewall filter: chain order ==="
-:local lastIn
-:local lastFw
-:local firstFw
-:local inCount 0
-:local fwCount 0
+:global lastIn
+:global lastFw
+:global firstFw
+:global inCount 0
+:global fwCount 0
 :foreach rid in=[/ip firewall filter find chain=input] do={ :set lastIn $rid; :set inCount ($inCount + 1) }
 :foreach rid in=[/ip firewall filter find chain=forward] do={
   :if ($fwCount = 0) do={ :set firstFw $rid }
@@ -61,11 +62,11 @@
 :if ([:len [/ip firewall nat find comment="PS5"]] = 4) do={ :set vok ($vok + 1); :put ("OK    " . "PS5 forwards = 4 rules") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "PS5 forwards = 4 rules" . "  ->  " . "check /ip firewall nat") }
 :if ([:len [/ip firewall nat find comment~"defconf"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "no factory defconf NAT rules left") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "no factory defconf NAT rules left" . "  ->  " . "run 10-firewall.rsc") }
 :if ([:len [/ip firewall nat find comment="wg"]] = 0) do={ :set vok ($vok + 1); :put ("OK    " . "old wg forward removed") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "old wg forward removed" . "  ->  " . "run 30-portforward.rsc") }
-:local natTotal [:len [/ip firewall nat find]]
+:global natTotal [:len [/ip firewall nat find]]
 :if ($natTotal = 8) do={ :set vok ($vok + 1); :put ("OK    " . "NAT has exactly 8 rules (no duplicates or extras)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "NAT has exactly 8 rules (no duplicates or extras)" . "  ->  " . ("found " . $natTotal . " rules")) }
-:local dstTotal [:len [/ip firewall nat find chain=dstnat]]
+:global dstTotal [:len [/ip firewall nat find chain=dstnat]]
 :if ($dstTotal = 6) do={ :set vok ($vok + 1); :put ("OK    " . "exactly 6 port-forward (dstnat) rules") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "exactly 6 port-forward (dstnat) rules" . "  ->  " . ("found " . $dstTotal)) }
-:local nasBad 0
+:global nasBad 0
 :foreach rid in=[/ip firewall nat find comment="emby/jellyfin"] do={
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
 }
@@ -73,14 +74,14 @@
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.200") do={ :set nasBad ($nasBad + 1) }
 }
 :if ($nasBad = 0) do={ :set vok ($vok + 1); :put ("OK    " . "emby/jellyfin/qbit -> 192.168.100.200") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "emby/jellyfin/qbit -> 192.168.100.200" . "  ->  " . ($nasBad . " rule(s) point elsewhere")) }
-:local ps5Bad 0
+:global ps5Bad 0
 :foreach rid in=[/ip firewall nat find comment="PS5"] do={
   :if ([:tostr [/ip firewall nat get $rid to-addresses]] != "192.168.100.148") do={ :set ps5Bad ($ps5Bad + 1) }
 }
 :if ($ps5Bad = 0) do={ :set vok ($vok + 1); :put ("OK    " . "PS5 -> 192.168.100.148") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "PS5 -> 192.168.100.148" . "  ->  " . ($ps5Bad . " rule(s) point elsewhere")) }
 
 :put "=== address list ==="
-:local bogons [:len [/ip firewall address-list find list=bogons]]
+:global bogons [:len [/ip firewall address-list find list=bogons]]
 :if ($bogons = 5) do={ :set vok ($vok + 1); :put ("OK    " . "bogons list has 5 entries (no duplicates)") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "bogons list has 5 entries (no duplicates)" . "  ->  " . ("found " . $bogons)) }
 
 :put "=== DNS / DHCP ==="
@@ -100,7 +101,7 @@
 :if ([:tostr [/ip socks get enabled]] = "false") do={ :set vok ($vok + 1); :put ("OK    " . "SOCKS off") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "SOCKS off" . "  ->  " . "enabled") }
 
 :put "=== cloud ==="
-:local ddns [:tostr [/ip cloud get ddns-enabled]]
+:global ddns [:tostr [/ip cloud get ddns-enabled]]
 :if ($ddns = "true" or $ddns = "yes") do={ :set vok ($vok + 1); :put ("OK    " . "cloud DDNS enabled") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "cloud DDNS enabled" . "  ->  " . ("ddns-enabled=" . $ddns)) }
 :put ("      DDNS name: " . [/ip cloud get dns-name])
 
