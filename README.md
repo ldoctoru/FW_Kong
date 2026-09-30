@@ -24,7 +24,9 @@ RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and ke
 
 Port forwards (emby/jellyfin, qBittorrent, PS5, WireGuard) match on
 the `WAN` interface list, so a changing WAN IP does not matter. See
-`config/30-portforward.rsc`; fill in the target hosts before importing.
+`config/30-portforward.rsc`: media/qBittorrent -> `192.168.100.200`,
+PS5 -> `192.168.100.148`. WireGuard (udp 13231) terminates on the router itself,
+so it is an `input` accept rule, not a dst-nat.
 
 ## Rule policy (order matters)
 
@@ -62,7 +64,7 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
     ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS
     ├── 10-firewall.rsc    # address lists, filter, NAT
     ├── 20-hardening.rsc   # disable unused services
-    └── 30-portforward.rsc # dstnat + hairpin (fill in target IPs)
+    └── 30-portforward.rsc # dstnat + hairpin
 ```
 
 ## Usage

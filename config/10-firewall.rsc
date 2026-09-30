@@ -17,6 +17,7 @@ add list=bogons address=240.0.0.0/4
 add chain=input action=accept connection-state=established,related,untracked comment="in: est/rel"
 add chain=input action=drop   connection-state=invalid comment="in: drop invalid"
 add chain=input action=accept protocol=icmp limit=20,5:packet comment="in: icmp (rate limited)"
+add chain=input action=accept protocol=udp dst-port=13231 in-interface-list=WAN comment="in: wg"
 add chain=input action=accept in-interface-list=LAN comment="in: LAN full access to router"
 add chain=input action=drop   in-interface-list=WAN log=yes log-prefix="WAN-IN-DROP " limit=5,5:packet comment="in: log WAN drops"
 add chain=input action=drop   comment="in: drop all else"
