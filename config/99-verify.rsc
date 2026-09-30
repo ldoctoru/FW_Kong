@@ -36,15 +36,21 @@ $chk ok=($filterTotal = 15) name="filter has exactly 15 rules (no duplicates or 
 $chk ok=([:len [/ip firewall filter find comment~"defconf"]] = 0) name="no factory defconf filter rules left" info="run 10-firewall.rsc"
 
 :put "=== firewall filter: chain order ==="
-:local lastIn ""
-:local lastFw ""
-:local firstFw ""
-:foreach rid in=[/ip firewall filter find chain=input] do={ :set lastIn $rid }
-:foreach rid in=[/ip firewall filter find chain=forward] do={
-  :if ($firstFw = "") do={ :set firstFw $rid }
-  :set lastFw $rid
+:local lastIn
+:local lastFw
+:local firstFw
+:local inCount 0
+:local fwCount 0
+:foreach rid in=[/ip firewall filter find chain=input] do={
+  :set lastIn $rid
+  :set inCount ($inCount + 1)
 }
-:if ($lastIn = "" or $lastFw = "") do={
+:foreach rid in=[/ip firewall filter find chain=forward] do={
+  :if ($fwCount = 0) do={ :set firstFw $rid }
+  :set lastFw $rid
+  :set fwCount ($fwCount + 1)
+}
+:if ($inCount = 0 or $fwCount = 0) do={
   $chk ok=false name="input/forward chains have rules" info="chain empty"
 } else={
   $chk ok=([/ip firewall filter get $lastIn action] = "drop") name="input chain ends with drop" info="last input rule is not a drop"
