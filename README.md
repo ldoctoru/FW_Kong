@@ -1,30 +1,31 @@
 # FW_Kong – MikroTik Homelab Firewall
 
-RouterOS v7 firewall configuration for a homelab: default-deny, VLAN-segmented,
-stateful, and kept in Git as reviewable `.rsc` scripts.
+RouterOS v7 firewall configuration for a homelab: default-deny, stateful, and kept in Git as reviewable `.rsc` scripts.
 
-> **Status:** baseline / template. Adjust interface names, VLAN IDs and subnets
-> to your network before importing. Always test with Safe Mode.
+> **Status:** baseline. Adjust interface names and the LAN subnet in
+> `config/00-base.rsc` before importing. Always test with Safe Mode.
 
 ## Goals
 
 - **Default deny** on `input` and `forward`; explicit allows only.
-- **Segmentation** between trusted, IoT, servers, guest and management.
+- **Small and simple**: one WAN, one flat LAN; easy to extend to VLANs later.
 - **Fast path first**: FastTrack for established/related, then drops.
 - **Reproducible**: whole config lives in Git; no click-ops drift.
 - **No secrets in the repo** (see `.gitignore`).
 
-## Example network model
+## Network model (flat, no VLANs)
 
-| VLAN | Name    | Subnet          | Access policy                                  |
-|-----:|---------|-----------------|------------------------------------------------|
-|   10 | MGMT    | 10.10.10.0/24   | Reaches router + all VLANs (admin only)        |
-|   20 | LAN     | 10.10.20.0/24   | Internet, servers (selected ports)             |
-|   30 | SERVERS | 10.10.30.0/24   | Internet (limited), no initiation to LAN       |
-|   40 | IoT     | 10.10.40.0/24   | Internet only, DNS/NTP to router, no lateral   |
-|   50 | GUEST   | 10.10.50.0/24   | Internet only, client isolation                |
+| Item          | Value                                              |
+|---------------|----------------------------------------------------|
+| WAN           | `ether1` -> modem at `192.168.100.1` (DHCP client) |
+| LAN           | `ether2-5` in `bridge-lan`, `192.168.88.0/24`      |
+| Router (LAN)  | `192.168.88.1`, DHCP pool `.100-.199`              |
+| Admin access  | WinBox/SSH from LAN only                           |
 
-Interface lists: `WAN`, `LAN` (all internal VLANs), `MGMT`.
+The router sits behind a modem, so this is double NAT. The modem UI stays
+reachable at `192.168.100.1` from the LAN via masquerade. If the modem
+supports bridge/IP-passthrough mode, use it and remove double NAT.
+LAN must not overlap `192.168.100.0/24`.
 
 ## Rule policy (order matters)
 
@@ -32,16 +33,15 @@ Interface lists: `WAN`, `LAN` (all internal VLANs), `MGMT`.
 1. accept established, related, untracked
 2. drop invalid
 3. accept ICMP (rate limited)
-4. accept DNS/NTP from internal VLANs as needed
-5. accept WinBox/SSH only from `MGMT`
-6. drop everything else (log WAN drops with a rate limit)
+4. accept everything from `LAN` (WinBox/SSH further limited by `/ip service`)
+5. drop everything else (log WAN drops with a rate limit)
 
 **forward chain (traffic through the router)**
 1. FastTrack established/related
 2. accept established, related, untracked
 3. drop invalid
 4. drop new WAN→LAN not DSTNATed
-5. inter-VLAN allow rules (per table above)
+5. bogon source check
 6. LAN → WAN accept
 7. drop everything else
 
@@ -58,13 +58,10 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
 ├── README.md
 ├── .gitignore
 ├── LICENSE
-└── config/            # (add) .rsc modules, applied in numeric order
-    ├── 00-interfaces.rsc
-    ├── 10-address-lists.rsc
-    ├── 20-filter.rsc
-    ├── 30-nat.rsc
-    ├── 40-ipv6.rsc
-    └── 90-hardening.rsc
+└── config/
+    ├── 00-base.rsc        # bridge, interface lists, IPs, DHCP, DNS
+    ├── 10-firewall.rsc    # address lists, filter, NAT
+    └── 20-hardening.rsc   # disable unused services
 ```
 
 ## Usage
@@ -73,8 +70,9 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
    `/export hide-sensitive file=pre-fw`.
 2. Upload `.rsc` files (WinBox Files, `scp`, or SFTP).
 3. Enter **Safe Mode** (`Ctrl+X` in terminal) so a lockout auto-reverts.
-4. Import in order: `/import file-name=20-filter.rsc`
-5. Verify access from MGMT, then leave Safe Mode to commit.
+4. Import in order: `00-base.rsc`, `10-firewall.rsc`, `20-hardening.rsc`
+   (`/import file-name=10-firewall.rsc`). Check port names in `00-base.rsc` first.
+5. Verify LAN access to the router, then leave Safe Mode to commit.
 
 Verify with:
 
