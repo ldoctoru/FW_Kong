@@ -65,7 +65,8 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
     ├── 00-base.rsc        # adopt factory defconf: interface lists, DNS (Technitium)
     ├── 10-firewall.rsc    # address lists, filter, NAT
     ├── 20-hardening.rsc   # disable unused services
-    └── 30-portforward.rsc # dstnat + hairpin
+    ├── 30-portforward.rsc # dstnat + hairpin
+    └── 99-verify.rsc      # read-only health/duplicate check
 ```
 
 ## Usage
@@ -79,7 +80,13 @@ discovery on WAN, UPnP), and IPv6 mirror rules (ICMPv6 must stay allowed).
    removes the default rules and replaces them.
 5. Verify LAN access to the router, then leave Safe Mode to commit.
 
-Verify with:
+Verify (read-only, prints OK/FAIL and finds duplicates):
+
+```
+/import file-name=99-verify.rsc
+```
+
+Or check by hand:
 
 ```
 /ip firewall filter print stats
