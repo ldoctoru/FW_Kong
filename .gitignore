@@ -1,0 +1,57 @@
+# --- MikroTik / RouterOS: never commit secrets or device state ---
+# Raw exports contain hashes, PSKs, VPN secrets, SNMP communities.
+# Only commit exports made with:  /export hide-sensitive file=sanitized
+*.backup
+*.rif
+*.npk
+*.auth
+*.dude
+*.rsc.raw
+export-raw*.rsc
+export-*.rsc
+backup-*.rsc
+flash/
+*.rsc.local
+local/
+private/
+
+# Secrets / credentials
+.env
+.env.*
+!.env.example
+secrets.*
+*.key
+*.pem
+*.crt
+*.p12
+*.ovpn
+*.wg.conf
+wg-*.conf
+id_rsa*
+id_ed25519*
+*.pub.local
+vars.local.rsc
+
+# Logs and captures
+*.log
+*.pcap
+*.pcapng
+*.cap
+*.sniffer
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python / tooling (deploy scripts, linters)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+node_modules/
