@@ -12,4 +12,11 @@
 :if ([:len [/interface list member find list=WAN interface=ether1]] = 0) do={ /interface list member add list=WAN interface=ether1 }
 :if ([:len [/interface list member find list=LAN interface=bridge]] = 0) do={ /interface list member add list=LAN interface=bridge }
 
-/ip dns set allow-remote-requests=yes servers=1.1.1.1,9.9.9.9
+# DNS: Technitium server at 192.168.100.150 (web UI http://192.168.100.150:5380).
+# Clients get it straight from DHCP; the router itself also resolves through it.
+# If Technitium is down, LAN name resolution stops - keep it on a stable host.
+:local dnsHost "192.168.100.150"
+
+/ip dns set servers=$dnsHost allow-remote-requests=no
+/ip dhcp-client set [find interface=ether1] use-peer-dns=no
+/ip dhcp-server network set [find address=192.168.100.0/24] dns-server=$dnsHost
