@@ -67,6 +67,10 @@
 :if ([:len [/system logging action find name=authlog]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "log action authlog exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "log action authlog exists" . "  ->  " . "run logging.rsc") }
 :if ([:len [/system logging find action=authlog]] = 2) do={ :set vok ($vok + 1); :put ("OK    " . "2 log rules use authlog") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "2 log rules use authlog" . "  ->  " . "run logging.rsc") }
 
+:put "=== auto update ==="
+:if ([:len [/system scheduler find name=autoupdate]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "scheduler autoupdate exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "scheduler autoupdate exists" . "  ->  " . "run autoupdate.rsc") }
+:if ([:len [/system scheduler find name=fwupgrade]] = 1) do={ :set vok ($vok + 1); :put ("OK    " . "scheduler fwupgrade exists") } else={ :set vfail ($vfail + 1); :put ("FAIL  " . "scheduler fwupgrade exists" . "  ->  " . "run autoupdate.rsc") }
+:put ("      update channel: " . [/system package update get channel] . ", running " . [/system package update get installed-version])
 :put "==============================="
 :put ("passed: " . $vok . "   failed: " . $vfail)
 :if ($vfail = 0) do={ :put "RESULT: ALL OK" } else={ :put "RESULT: FIX THE FAIL LINES ABOVE" }
