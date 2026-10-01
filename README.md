@@ -17,6 +17,7 @@ The earlier, larger version (DNS, hardening, DDNS, verify) is kept in [`archive/
 |-----------------------|-----------------------------------------------------------|
 | `config/firewall.rsc` | The whole firewall: 10 filter rules, 12 NAT rules         |
 | `config/logging.rsc`  | Separate log buffer for logins and failed logins          |
+| `config/autoupdate.rsc` | Daily RouterOS update check (backup first) + firmware upgrade |
 | `config/verify.rsc`   | Read-only check that the router matches `firewall.rsc`    |
 | `archive/`            | Previous config and README (not used, kept for reference) |
 
@@ -50,7 +51,7 @@ LAN to internet is allowed by default (no final forward drop needed).
 2. Put `firewall.rsc` on the router (Winbox **Files**, or `/tool fetch`).
 3. Enter **Safe Mode** (`Ctrl+X`) from a LAN port.
 4. `/import file-name=firewall.rsc verbose=yes`
-5. `/import file-name=logging.rsc`
+5. `/import file-name=logging.rsc` and (optional) `/import file-name=autoupdate.rsc`
 6. `/import file-name=verify.rsc`, expect `RESULT: ALL OK`.
 7. Leave Safe Mode with `Ctrl+X` to keep the changes.
 
@@ -73,6 +74,20 @@ Change the IPs and ports at the top of each section for your network.
 
 The internet cannot log in to the router (the input chain drops it); the list shows who tried.
 A failed login from a LAN address means a device or person inside the network.
+
+## Automatic updates (optional)
+
+`autoupdate.rsc` checks the `stable` channel every day at 04:00. If there is a new version it
+saves a backup and an export (`pre-update-<version>`), installs it, and the router reboots.
+After a boot, a second scheduler upgrades the RouterBOARD firmware if it is older, then reboots once.
+
+```
+/log print where message~"autoupdate"      # what it did
+/system scheduler disable autoupdate       # stop updating
+```
+
+Use `long-term` instead of `stable` (edit the script) for fewer updates. Expect a few
+minutes of downtime (port forwards, DNS, DDNS) when an update installs.
 
 ## Secrets
 
