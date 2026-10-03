@@ -51,7 +51,7 @@ LAN to internet is allowed by default (no final forward drop needed).
 2. Put `firewall.rsc` on the router (Winbox **Files**, or `/tool fetch`).
 3. Enter **Safe Mode** (`Ctrl+X`) from a LAN port.
 4. `/import file-name=firewall.rsc verbose=yes`
-5. `/import file-name=logging.rsc` and (optional) `/import file-name=autoupdate.rsc`
+5. `/import file-name=logging.rsc` and (optional) `/import file-name=autoupdate.rsc verbose=yes`
 6. `/import file-name=verify.rsc`, expect `RESULT: ALL OK`.
 7. Leave Safe Mode with `Ctrl+X` to keep the changes.
 
